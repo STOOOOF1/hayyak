@@ -1,0 +1,46 @@
+{
+  "name": "hayyak",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "node scripts/build.mjs",
+    "start": "next start",
+    "lint": "eslint src tests scripts next.config.ts vitest.config.ts eslint.config.mjs postcss.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:app": "vitest run tests/app",
+    "test:db": "vitest run tests/database",
+    "db:start": "npx --yes supabase@2.116.0 start",
+    "db:stop": "npx --yes supabase@2.116.0 stop",
+    "db:reset": "npx --yes supabase@2.116.0 db reset",
+    "db:push": "npx --yes supabase@2.116.0 db push",
+    "demo:seed": "node --env-file=.env.local scripts/seed-demo.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.5",
+    "@supabase/supabase-js": "2.112.4",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@next/swc-wasm-nodejs": "16.3.3",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.3",
+    "es-abstract": "1.24.2",
+    "postcss": "8.5.26",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}
