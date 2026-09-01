@@ -18,9 +18,16 @@ export const IDS = {
   visitorB: "40000000-0000-4000-8000-00000000000b",
 } as const;
 
-const migrationPath = fileURLToPath(
+const phase1MigrationPath = fileURLToPath(
   new URL(
     "../../supabase/migrations/20260831000100_phase1_foundation.sql",
+    import.meta.url,
+  ),
+);
+
+const phase2MigrationPath = fileURLToPath(
+  new URL(
+    "../../supabase/migrations/20260901100000_phase2_call_backend.sql",
     import.meta.url,
   ),
 );
@@ -49,7 +56,8 @@ export async function createTestDatabase() {
     $$;
   `);
 
-  await db.exec(await readFile(migrationPath, "utf8"));
+  await db.exec(await readFile(phase1MigrationPath, "utf8"));
+  await db.exec(await readFile(phase2MigrationPath, "utf8"));
   await seedAuthorizationFixtures(db);
 
   return db;
@@ -118,6 +126,7 @@ export async function insertCall(
     branchId: string;
     visitorId: string;
     status?: "WAITING" | "ACTIVE" | "ON_HOLD" | "ENDED" | "CANCELLED";
+    queuedAt?: string;
   },
 ) {
   const status = values.status ?? "WAITING";
@@ -125,11 +134,24 @@ export async function insertCall(
   return db.query<{ id: string; queue_sequence: number }>(
     `
       insert into public.call_requests (
-        tenant_id, branch_id, visitor_id, status, queue_sequence
-      ) values ($1, $2, $3, $4, 999999)
+        tenant_id, branch_id, visitor_id, status, queue_sequence, queued_at
+      ) values ($1, $2, $3, $4, 999999, coalesce($5, now()))
       returning id, queue_sequence;
     `,
-    [values.tenantId, values.branchId, values.visitorId, status],
+    [values.tenantId, values.branchId, values.visitorId, status, values.queuedAt ?? null],
   );
+}
+
+export async function setCallQueuedAt(db: PGlite, callId: string, ageMinutes: number) {
+  await db.query(
+    `update public.call_requests
+       set queued_at = now() - ($1 * interval '1 minute')
+     where id = $2`,
+    [ageMinutes, callId],
+  );
+}
+
+export async function resetDatabaseOwner(db: PGlite) {
+  await db.exec("reset role; select set_config('request.jwt.claim.sub', '', false);");
 }
 
